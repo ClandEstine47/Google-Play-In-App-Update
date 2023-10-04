@@ -36,11 +36,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         appUpdateManager = AppUpdateManagerFactory.create(applicationContext)
+
         if (updateType == AppUpdateType.FLEXIBLE) {
             appUpdateManager.registerListener(installStateUpdatedListner)
         }
+
         checkForAppUpdates()
+
         setContent {
             GooglePlayInAppUpdateTheme {
                 // A surface container using the 'background' color from the theme
@@ -55,27 +59,33 @@ class MainActivity : ComponentActivity() {
     }
 
     private val installStateUpdatedListner = InstallStateUpdatedListener { state ->
+
         if (state.installStatus() == InstallStatus.DOWNLOADED) {
             Toast.makeText(
                 applicationContext,
                 "Download successful, Restarting app in 3 seconds.",
                 Toast.LENGTH_SHORT
             ).show()
+
             lifecycleScope.launch {
                 delay(5.seconds)
                 appUpdateManager.completeUpdate()
             }
         }
+
     }
 
     private fun checkForAppUpdates() {
+
         appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
+
             val isUpdateAvailable = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
             val isUpdateAllowed = when(updateType) {
                 AppUpdateType.FLEXIBLE -> info.isFlexibleUpdateAllowed
                 AppUpdateType.IMMEDIATE -> info.isImmediateUpdateAllowed
                 else -> false
             }
+
             if (isUpdateAvailable && isUpdateAllowed) {
                 appUpdateManager.startUpdateFlowForResult(
                     info,
@@ -85,10 +95,13 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+
     }
 
     override fun onResume() {
+
         super.onResume()
+
         if (updateType == AppUpdateType.IMMEDIATE) {
             appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
                 if (info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
@@ -101,21 +114,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
         super.onActivityResult(requestCode, resultCode, data)
+
         if (requestCode == 123) {
             if (resultCode != RESULT_OK) {
                 print("Something went wrong updating...")
             }
         }
+
     }
 
     override fun onDestroy() {
+
         super.onDestroy()
+
         if (updateType == AppUpdateType.FLEXIBLE) {
             appUpdateManager.unregisterListener(installStateUpdatedListner)
         }
+
     }
+
 }
